@@ -1,0 +1,14 @@
+{
+  "name": "dashboard-social",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard theo dõi các kênh social qua Zernio API",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "snapshot": "node snapshot.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

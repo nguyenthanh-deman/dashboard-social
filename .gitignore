@@ -1,0 +1,9 @@
+.env
+.env.*
+node_modules/
+.claude/
+*.log
+data/snapshots/2026-10-13.json
+data/snapshots/2026-10-16.json
+data/snapshots/2026-10-19.json
+data/weekly/2026-W42.json

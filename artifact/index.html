@@ -1,0 +1,1347 @@
+<title>Dashboard kênh social</title>
+<style>
+/* Màu: bảng màu dataviz tham chiếu, đã chọn riêng cho chế độ sáng và tối. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --wash: rgba(11, 11, 11, 0.045);
+  --series-1: #2a78d6;
+  --track: #cde2fb;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --wash: rgba(255, 255, 255, 0.06);
+    --series-1: #3987e5;
+    --track: #184f95;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --wash: rgba(255, 255, 255, 0.06);
+  --series-1: #3987e5;
+  --track: #184f95;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.45 var(--font);
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+
+/* ---------- header ---------- */
+.top { background: var(--surface); border-bottom: 1px solid var(--border); }
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; padding-bottom: 12px; flex-wrap: wrap; }
+.brand h1 { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
+.sub { color: var(--ink-2); font-size: 12.5px; }
+.top-actions { display: flex; align-items: center; gap: 8px; }
+.updated { color: var(--muted); font-size: 12.5px; }
+.btn {
+  border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+  padding: 6px 12px; cursor: pointer; min-height: 32px;
+}
+.btn:hover { background: var(--wash); }
+.btn-icon { width: 32px; padding: 0; display: inline-grid; place-items: center; }
+.btn[disabled] { opacity: .55; cursor: progress; }
+
+/* ---------- filter row ---------- */
+.filters { display: flex; align-items: center; gap: 12px; padding: 16px 0 12px; flex-wrap: wrap; }
+.filters-label { color: var(--ink-2); font-size: 12.5px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 2px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 5px 12px; border-radius: 6px; cursor: pointer; color: var(--ink-2); }
+.seg button:hover { background: var(--wash); }
+.seg button[aria-pressed="true"] { background: var(--wash); color: var(--ink); font-weight: 650; }
+.seg button[aria-pressed="true"]::before { content: "✓ "; font-weight: 700; }
+
+#banner:empty { display: none; }
+.banner { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; }
+#content { transition: opacity .15s; }
+#content.is-loading { opacity: .55; pointer-events: none; }
+#content > * + * { margin-top: 16px; }
+
+/* ---------- card ---------- */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.card-title { font-size: 14px; font-weight: 650; }
+.card-sub { color: var(--ink-2); font-size: 12.5px; margin-top: 1px; }
+.view-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; padding: 2px; gap: 2px; }
+.view-toggle button { border: 0; background: transparent; padding: 2px 9px; font-size: 12px; border-radius: 5px; cursor: pointer; color: var(--ink-2); }
+.view-toggle button[aria-pressed="true"] { background: var(--wash); color: var(--ink); font-weight: 650; }
+
+/* ---------- KPI ---------- */
+.kpis { display: grid; gap: 12px; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.kpis .hero { grid-column: span 2; }
+.tile-label { color: var(--ink-2); font-size: 12.5px; }
+.tile-value { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; margin-top: 4px; }
+.hero .tile-value { font-size: clamp(40px, 5vw, 56px); line-height: 1.05; letter-spacing: -0.03em; }
+.tile-note { color: var(--ink-2); font-size: 12.5px; margin-top: 6px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.tile-note .dim { color: var(--muted); }
+.tile .spark { margin-top: 8px; display: block; }
+.delta { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.delta svg { flex: none; }
+
+/* ---------- alerts ---------- */
+.alerts { border-color: color-mix(in srgb, var(--critical) 35%, var(--border)); }
+.alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.alert-list button { width: 100%; text-align: left; display: flex; gap: 8px; align-items: flex-start; border: 0; background: transparent; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+.alert-list button:hover { background: var(--wash); }
+.alert-list .who { font-weight: 600; }
+.alert-list .why { color: var(--ink-2); font-size: 12.5px; }
+
+/* ---------- charts ---------- */
+.grid-2 { display: grid; gap: 16px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.grid-2.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.chart { position: relative; width: 100%; min-height: 220px; }
+.chart svg { display: block; overflow: visible; touch-action: pan-y; }
+.chart svg:focus-visible { outline-offset: 4px; border-radius: 4px; }
+.ax-grid { stroke: var(--grid); stroke-width: 1; }
+.ax-base { stroke: var(--axis); stroke-width: 1; }
+.ax-text { fill: var(--muted); font-size: 11px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+.end-label { fill: var(--ink); font-size: 12px; font-weight: 650; font-family: var(--font); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.line { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.area { fill: var(--series-1); opacity: .10; }
+.dot { fill: var(--series-1); stroke: var(--surface); stroke-width: 2; }
+.bar { fill: var(--series-1); }
+.bar.on { filter: brightness(1.15); }
+.cross { stroke: var(--axis); stroke-width: 1; }
+.spark path { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.spark circle { fill: var(--series-1); stroke: var(--surface); stroke-width: 2; }
+
+.hbars { display: grid; gap: 10px; }
+.hb { display: grid; grid-template-columns: minmax(70px, 150px) minmax(0, 1fr); gap: 10px; align-items: center; cursor: default; border: 0; background: transparent; padding: 0; text-align: left; width: 100%; }
+button.hb { cursor: pointer; }
+.hb-label { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-label small { display: block; color: var(--muted); font-size: 11.5px; }
+.hb-track { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hb-bar { height: 14px; background: var(--series-1); border-radius: 0 4px 4px 0; min-width: 2px; transition: filter .1s; }
+.hb:hover .hb-bar, .hb:focus-visible .hb-bar { filter: brightness(1.15); }
+.hb-val { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- tooltip ---------- */
+.tip { position: fixed; z-index: 60; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; box-shadow: 0 6px 24px rgba(0, 0, 0, .14); min-width: 150px; max-width: 280px; font-size: 12.5px; }
+.tip[hidden] { display: none; }
+.tip-title { color: var(--ink-2); margin-bottom: 4px; }
+.tip-row { display: flex; align-items: baseline; gap: 6px; }
+.tip-row strong { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.tip-row span { color: var(--ink-2); }
+.tip-key { display: inline-block; width: 12px; height: 2px; background: var(--series-1); align-self: center; border-radius: 1px; }
+.tip-row.minor strong { font-size: 12.5px; font-weight: 600; }
+
+/* ---------- table ---------- */
+.toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.toolbar .spacer { flex: 1; }
+.search { border: 1px solid var(--border); background: var(--page); color: var(--ink); border-radius: 8px; padding: 6px 10px; min-height: 32px; min-width: 240px; font: inherit; }
+.check { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); cursor: pointer; }
+.table-wrap { overflow-x: auto; margin: 0 -16px -16px; border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; }
+table.t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.t th, .t td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+.t th:first-child, .t td:first-child { text-align: left; padding-left: 16px; }
+.t th.left, .t td.left { text-align: left; }
+.t th { font-weight: 600; color: var(--ink-2); font-size: 12.5px; position: sticky; top: 0; background: var(--surface); }
+.t th button { border: 0; background: transparent; cursor: pointer; font-weight: 600; color: inherit; padding: 0; display: inline-flex; gap: 4px; align-items: center; }
+.t th button:hover { color: var(--ink); }
+.t tbody tr.row { cursor: pointer; }
+.t tbody tr.row:hover { background: var(--wash); }
+.t tr.group-row td { text-align: left; background: var(--page); color: var(--ink-2); font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; padding-top: 7px; padding-bottom: 7px; }
+.t tr.dim td { color: var(--muted); }
+.t tfoot td { font-weight: 650; border-bottom: 0; background: var(--page); }
+.t .name { font-weight: 650; }
+.t .name small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+.chips { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; font-size: 12px; color: var(--ink-2); }
+.badge { display: inline-block; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; font-size: 11.5px; color: var(--ink-2); background: var(--wash); font-weight: 500; margin-left: 6px; }
+.empty { padding: 24px; text-align: center; color: var(--muted); }
+
+/* ---------- status icon ---------- */
+.st { display: inline-flex; align-items: center; gap: 5px; }
+.st svg { flex: none; }
+
+/* ---------- top posts ---------- */
+.posts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.post { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px; border-radius: 10px; }
+.post:hover { background: var(--wash); }
+.thumb { width: 56px; height: 56px; border-radius: 8px; background: var(--wash); object-fit: cover; display: grid; place-items: center; color: var(--muted); font-size: 11px; overflow: hidden; }
+.post-body { min-width: 0; }
+.post-text { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+.post-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.post-stats { display: flex; gap: 14px; font-variant-numeric: tabular-nums; text-align: right; }
+.post-stats div { min-width: 52px; }
+.post-stats b { display: block; font-size: 14px; }
+.post-stats span { color: var(--muted); font-size: 11.5px; }
+.post-link { color: var(--ink-2); font-size: 12px; margin-left: 8px; }
+
+/* ---------- drawer ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .35); z-index: 40; }
+.scrim[hidden], .drawer[hidden] { display: none; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(780px, 100vw); background: var(--page); z-index: 50; overflow-y: auto; border-left: 1px solid var(--border); box-shadow: -12px 0 40px rgba(0, 0, 0, .18); padding: 16px; animation: slide .18s ease-out; }
+@keyframes slide { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.drawer-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.drawer-head h2 { font-size: 20px; font-weight: 650; }
+.drawer > * + * { margin-top: 12px; }
+.acc-list { display: grid; gap: 8px; }
+.acc { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--wash); object-fit: cover; display: grid; place-items: center; font-weight: 650; color: var(--ink-2); overflow: hidden; }
+.acc-name { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acc-name a { text-decoration: none; }
+.acc-name a:hover { text-decoration: underline; }
+.acc-sub { color: var(--ink-2); font-size: 12.5px; }
+.acc-fol { text-align: right; font-variant-numeric: tabular-nums; }
+.acc-fol b { font-size: 16px; display: block; }
+.mini { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.mini .tile-value { font-size: 20px; }
+.note { color: var(--muted); font-size: 12px; }
+
+.loading-card { text-align: center; padding: 48px 16px; color: var(--ink-2); }
+.bar-progress { height: 4px; border-radius: 2px; background: var(--track); max-width: 320px; margin: 12px auto 0; overflow: hidden; }
+.bar-progress i { display: block; height: 100%; background: var(--series-1); transition: width .3s; }
+
+table.data { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; max-height: 260px; display: block; overflow: auto; }
+table.data th, table.data td { padding: 5px 10px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data th:first-child, table.data td:first-child { text-align: left; }
+table.data th { color: var(--ink-2); font-weight: 600; position: sticky; top: 0; background: var(--surface); }
+
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpis .hero { grid-column: 1 / -1; }
+  .kpis > :last-child { grid-column: span 2; }
+}
+@media (max-width: 860px) {
+  .grid-2, .grid-2.even { grid-template-columns: minmax(0, 1fr); }
+  .post { grid-template-columns: 56px minmax(0, 1fr); }
+  .post-stats { grid-column: 1 / -1; justify-content: flex-start; text-align: left; }
+}
+@media (max-width: 560px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .alert-list { grid-template-columns: minmax(0, 1fr); }
+  .search { min-width: 0; flex: 1; }
+  .acc { grid-template-columns: 40px minmax(0, 1fr); }
+  .acc-fol { grid-column: 2; text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer { animation: none; }
+  #content, .hb-bar, .bar-progress i { transition: none; }
+}
+@media (forced-colors: active) {
+  .bar, .hb-bar { forced-color-adjust: none; background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgba(0, 0, 0, .35) 4px 6px); }
+}
+
+/* ---------- tab, đánh giá tuần, top video ---------- */
+.tabs { display: flex; gap: 4px; padding-top: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.tab { border: 0; background: transparent; padding: 8px 14px; cursor: pointer; color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); font-weight: 650; border-bottom-color: var(--series-1); }
+.chip.link { text-decoration: none; }
+.chip.link:hover { background: var(--wash); color: var(--ink); }
+
+.sel-wrap { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; }
+.sel { border: 1px solid var(--border); background: var(--page); color: var(--ink); border-radius: 8px; padding: 5px 8px; min-height: 32px; font: inherit; }
+
+.grade { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12.5px; font-weight: 650; border: 1px solid var(--border); white-space: nowrap; }
+.grade::before { content: ""; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--muted); }
+.grade.good::before { background: var(--good); }
+.grade.warning::before { background: var(--warning); }
+.grade.critical::before { background: var(--critical); }
+
+.wk-summary { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-top: 12px; }
+.wk-summary .tile-value { font-size: 22px; }
+.wk-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); margin-top: 12px; }
+.wk { display: grid; gap: 10px; align-content: start; }
+.wk-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.wk-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.wk-metrics > div { display: grid; gap: 1px; min-width: 0; }
+.m-label { color: var(--muted); font-size: 11.5px; }
+.wk-metrics b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.m-note { color: var(--ink-2); font-size: 11.5px; }
+.insights { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+.wk-posts summary { cursor: pointer; color: var(--ink-2); font-size: 12.5px; }
+.wk-posts .posts { margin-top: 6px; }
+
+.vt .vid { display: flex; gap: 10px; align-items: center; white-space: normal; min-width: 320px; max-width: 460px; }
+.vid-text { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+.thumb.sm { width: 44px; height: 44px; flex: none; }
+.dim { color: var(--muted); }
+@media (max-width: 560px) {
+  .wk-grid { grid-template-columns: minmax(0, 1fr); }
+  .wk-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.filters[hidden], .tabs[hidden] { display: none; }
+
+.vid-body { display: grid; min-width: 0; }
+.vid-body .post-link { margin-left: 0; }
+
+.commentary { border-left: 3px solid var(--series-1); padding: 2px 0 2px 10px; font-size: 13px; }
+.commentary p { margin: 2px 0 0; color: var(--ink-2); }
+
+</style>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <h1>Dashboard kênh social</h1>
+      <p id="sub" class="sub">Nguồn dữ liệu: Zernio</p>
+    </div>
+    <div class="top-actions">
+      <span id="updated" class="updated" aria-live="polite"></span>
+      <button id="btn-refresh" class="btn" type="button">Làm mới</button>
+      <button id="btn-theme" class="btn btn-icon" type="button" aria-label="Đổi giao diện sáng/tối" title="Đổi giao diện sáng/tối"></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Chế độ xem"></nav>
+  <div class="filters" id="range-filter" role="group" aria-label="Khoảng thời gian">
+    <span class="filters-label">Khoảng thời gian</span>
+    <div class="seg" id="range"></div>
+  </div>
+  <div id="banner" role="status"></div>
+  <div id="content"></div>
+</main>
+
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden></aside>
+<script id="app-src" type="text/plain">
+'use strict';
+// Bản tĩnh của dashboard: thay các lời gọi /api/... bằng dữ liệu ảnh chụp đã nhúng (window.__SNAPSHOT__).
+// Nhờ vậy app.js và insights.js chạy y nguyên như bản local.
+(function () {
+  const D = window.__SNAPSHOT__;
+  if (!D) return;
+  window.STATIC_MODE = true;
+  window.STATIC_RANGES = Object.keys(D.overviews).map(Number).sort((a, b) => a - b);
+
+  const DAY = 864e5;
+  const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const clamp = (v, lo, hi, dflt) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt; };
+  const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  const withMetrics = (p) => {
+    const engagement = num(p.likes) + num(p.comments) + num(p.shares) + num(p.saves);
+    return { ...p, engagement, er: p.views > 0 ? (engagement / p.views) * 100 : 0 };
+  };
+
+  const SORTS = {
+    views: (p) => p.views,
+    engagement: (p) => p.engagement,
+    er: (p) => (p.views >= 100 ? p.er : -1),
+    completion: (p) => (p.views >= 100 && p.completion != null ? p.completion : -1),
+    completion_rate: (p) => (p.completion != null ? p.completion : -1),
+    date: (p) => Date.parse(p.publishedAt) || 0,
+  };
+
+  function postsOf(channel) {
+    return (D.posts[channel] || []).map((p) => withMetrics({ ...p, channel }));
+  }
+
+  function topPosts(q) {
+    const days = clamp(q.get('days'), 1, 30, 7);
+    const since = Date.parse(D.generatedAt) - days * DAY;
+    const sortKey = SORTS[q.get('sort')] ? q.get('sort') : 'views';
+    const channel = q.get('channel'), platform = q.get('platform');
+    const seen = new Set();
+    const rows = [];
+    for (const name of D.channels) {
+      if (channel && name !== channel) continue;
+      for (const p of postsOf(name)) {
+        if (platform && p.platform !== platform) continue;
+        if (Date.parse(p.publishedAt) < since) continue;
+        if (seen.has(p.id)) continue; // cùng một bài ở hai kênh dùng chung tài khoản
+        seen.add(p.id);
+        rows.push(p);
+      }
+    }
+    const key = SORTS[sortKey];
+    rows.sort((a, b) => key(b) - key(a));
+    return {
+      date: D.date, generatedAt: D.generatedAt, total: rows.length,
+      channels: D.channels, platforms: D.platforms,
+      posts: rows.slice(0, clamp(q.get('limit'), 1, 100, 50)),
+    };
+  }
+
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const raw = typeof input === 'string' ? input : input.url;
+    const url = new URL(raw, location.href);
+    const m = url.pathname.match(/\/api\/(.+)$/);
+    if (!m) return realFetch(input, init);
+    const route = m[1];
+    const q = url.searchParams;
+
+    if (route === 'overview') {
+      const want = clamp(q.get('days'), 1, 366, 30);
+      const have = window.STATIC_RANGES;
+      const pick = have.includes(want) ? want : have.reduce((b, d) => (Math.abs(d - want) < Math.abs(b - want) ? d : b), have[0]);
+      return json(D.overviews[pick]);
+    }
+    if (route === 'status') return json({ loading: false, done: D.channels.length, total: D.channels.length });
+    if (route === 'snapshot-info') return json({ date: D.date, generatedAt: D.generatedAt, channels: D.channels.length });
+    if (route === 'top-posts') return json(topPosts(q));
+    if (route === 'weekly') {
+      const weeks = Object.keys(D.weekly).sort().reverse();
+      const w = D.weekly[q.get('week')] || D.weekly[weeks[0]];
+      return w ? json({ ...w, weeks }) : json({ error: 'Chưa có báo cáo tuần.' }, 404);
+    }
+    const c = route.match(/^channel\/([A-Za-z0-9_]+)\/posts$/);
+    if (c) {
+      const days = clamp(q.get('days'), 1, 30, 30);
+      const since = Date.parse(D.generatedAt) - days * DAY;
+      const key = SORTS[q.get('sort')] || SORTS.views;
+      const rows = postsOf(c[1]).filter((p) => Date.parse(p.publishedAt) >= since).sort((a, b) => key(b) - key(a));
+      return json({ posts: rows.slice(0, clamp(q.get('limit'), 1, 50, 15)) });
+    }
+    return json({ error: 'Không tìm thấy' }, 404);
+  };
+})();
+
+;
+'use strict';
+// Dashboard kênh social — mọi dữ liệu từ API đều đi qua textContent (không dùng innerHTML).
+
+// ---------- tiện ích DOM ----------
+const NS = 'http://www.w3.org/2000/svg';
+function build(el, attrs, kids) {
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.setAttribute('class', v);
+    else if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const h = (tag, attrs, ...kids) => build(document.createElement(tag), attrs, kids);
+const s = (tag, attrs, ...kids) => build(document.createElementNS(NS, tag), attrs, kids);
+const $ = (id) => document.getElementById(id);
+
+// ---------- định dạng ----------
+const nf = new Intl.NumberFormat('vi-VN');
+const fmt = (n) => nf.format(Math.round(n));
+const dec = (x, d = 1) => (Math.round(x * 10 ** d) / 10 ** d).toString().replace('.', ',');
+function compact(n) {
+  const a = Math.abs(n);
+  if (a >= 1e9) return dec(n / 1e9) + 'B';
+  if (a >= 1e6) return dec(n / 1e6, a >= 1e7 ? 0 : 1) + 'M';
+  if (a >= 1e4) return dec(n / 1e3, a >= 1e5 ? 0 : 1) + 'K';
+  return fmt(n);
+}
+const pct = (x) => dec(x, 2) + '%';
+const fmtDay = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('vi-VN') : '—');
+const fmtTime = (iso) => new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+const PLATFORM = { tiktok: 'TikTok', facebook: 'Facebook', youtube: 'YouTube', instagram: 'Instagram', threads: 'Threads' };
+const platformName = (p) => PLATFORM[p] || (p ? p[0].toUpperCase() + p.slice(1) : '—');
+// Trang Facebook dùng tên trang làm username nên không thêm "@"
+const handleOf = (platform, username) => (platform === 'facebook' ? username : `@${username}`);
+const todayUtc = () => new Date().toISOString().slice(0, 10);
+const partialNote = (daily) => (daily.length && daily[daily.length - 1].date === todayUtc() ? ` · ngày cuối (${fmtDay(daily[daily.length - 1].date)}) chưa đủ dữ liệu` : '');
+
+function pctChange(cur, prev) {
+  if (!prev) return cur ? null : 0;
+  return ((cur - prev) / prev) * 100;
+}
+
+// ---------- biểu tượng ----------
+function icon(kind, size = 14) {
+  const attrs = { width: size, height: size, viewBox: '0 0 16 16', 'aria-hidden': 'true' };
+  if (kind === 'up') return s('svg', attrs, s('path', { d: 'M8 3l5 8H3z', fill: 'var(--good)' }));
+  if (kind === 'down') return s('svg', attrs, s('path', { d: 'M8 13L3 5h10z', fill: 'var(--critical)' }));
+  if (kind === 'flat') return s('svg', attrs, s('path', { d: 'M3 8h10', stroke: 'var(--muted)', 'stroke-width': 2, 'stroke-linecap': 'round' }));
+  if (kind === 'ok') return s('svg', attrs, s('circle', { cx: 8, cy: 8, r: 7, fill: 'var(--good)' }), s('path', { d: 'M4.8 8.2l2.2 2.2 4.2-4.4', fill: 'none', stroke: '#fff', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  if (kind === 'warning') return s('svg', attrs, s('path', { d: 'M8 1.5l7 12.5H1z', fill: 'var(--warning)' }), s('path', { d: 'M8 6v4M8 11.6v.4', stroke: '#0b0b0b', 'stroke-width': 1.8, 'stroke-linecap': 'round' }));
+  return s('svg', attrs, s('circle', { cx: 8, cy: 8, r: 7, fill: 'var(--critical)' }), s('path', { d: 'M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2', stroke: '#fff', 'stroke-width': 1.8, 'stroke-linecap': 'round' }));
+}
+const STATE_LABEL = { ok: 'Hoạt động', warning: 'Cảnh báo', error: 'Lỗi' };
+const statusBadge = (state, label) => h('span', { class: 'st' }, icon(state), label || STATE_LABEL[state]);
+
+function delta(cur, prev, suffix = '') {
+  const c = pctChange(cur, prev);
+  if (c === null) return h('span', { class: 'delta' }, icon('up'), 'Mới', suffix && h('span', { class: 'dim' }, suffix));
+  const kind = Math.abs(c) < 0.05 ? 'flat' : c > 0 ? 'up' : 'down';
+  const sign = c > 0 ? '+' : c < 0 ? '−' : '';
+  const txt = Math.abs(c) >= 1000 ? `${sign}999%+` : `${sign}${dec(Math.abs(c), 1)}%`; // kỳ trước gần bằng 0 thì % không còn ý nghĩa
+  return h('span', { class: 'delta' }, icon(kind), txt);
+}
+
+// ---------- tooltip dùng chung ----------
+const tip = $('tip');
+function showTip(nodes, x, y) {
+  tip.replaceChildren(...nodes);
+  tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  let left = x + 14, top = y - r.height - 10;
+  if (left + r.width > innerWidth - 8) left = x - r.width - 14;
+  if (left < 8) left = 8;
+  if (top < 8) top = y + 16;
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+}
+const hideTip = () => { tip.hidden = true; };
+const tipRow = (value, label, o = {}) => h('div', { class: 'tip-row' + (o.minor ? ' minor' : '') }, o.key && h('i', { class: 'tip-key' }), h('strong', null, value), h('span', null, label));
+
+// ---------- thang đo ----------
+function niceScale(min, max, integer = true) {
+  if (max === min) max = min + 1;
+  const range = max - min;
+  const rough = range / 4;
+  const mag = 10 ** Math.floor(Math.log10(rough));
+  let step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((v) => v >= rough);
+  if (integer) step = Math.max(1, step);
+  const lo = Math.floor(min / step) * step;
+  const hi = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = lo; v <= hi + step / 2; v += step) ticks.push(v);
+  return { lo, hi, ticks };
+}
+
+// ---------- biểu đồ SVG ----------
+const charts = []; // { host, draw }
+// Mỗi biểu đồ tự vẽ lại khi bề rộng khung chứa đổi (kể cả lần đầu có bề rộng, ví dụ khi hết bị ẩn).
+function registerChart(host, draw) {
+  const entry = { host, w: 0, draw: () => (host.dataset.empty ? host.replaceChildren(h('p', { class: 'note' }, 'Chưa có dữ liệu')) : draw()) };
+  charts.push(entry);
+  const ro = new ResizeObserver(() => {
+    if (!host.isConnected) { ro.disconnect(); return; }
+    const w = host.clientWidth;
+    if (w && w !== entry.w) { entry.w = w; entry.draw(); }
+  });
+  ro.observe(host);
+  if (host.clientWidth) { entry.w = host.clientWidth; entry.draw(); } // vẽ ngay nếu đã có bề rộng
+}
+function redrawCharts() {
+  for (let i = charts.length - 1; i >= 0; i--) {
+    const c = charts[i];
+    if (!c.host.isConnected) charts.splice(i, 1);
+    else if (c.host.clientWidth) { c.w = c.host.clientWidth; c.draw(); }
+  }
+}
+
+// Con trỏ/bàn phím chọn một vị trí X; tooltip hiện cùng nội dung cho cả hai.
+function attachScrub(svgEl, host, n, idxFromX, onShow, onHide) {
+  let cur = -1;
+  const show = (i, clientX, clientY) => { cur = i; onShow(i, clientX, clientY); };
+  const hide = () => { cur = -1; onHide(); hideTip(); };
+  svgEl.addEventListener('pointermove', (e) => {
+    const r = svgEl.getBoundingClientRect();
+    show(idxFromX(e.clientX - r.left), e.clientX, e.clientY);
+  });
+  svgEl.addEventListener('pointerleave', hide);
+  svgEl.addEventListener('blur', hide);
+  svgEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') return hide();
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const i = Math.max(0, Math.min(n - 1, (cur < 0 ? n - 1 : cur) + (e.key === 'ArrowRight' ? 1 : -1)));
+    const r = host.getBoundingClientRect();
+    show(i, r.left + r.width / 2, r.top + 40);
+  });
+}
+
+function xLabels(svgEl, rows, xAt, y, m, W) {
+  const n = rows.length;
+  const count = Math.min(n, W < 420 ? 4 : 6);
+  const seen = new Set();
+  for (let k = 0; k < count; k++) {
+    const i = count === 1 ? 0 : Math.round((k * (n - 1)) / (count - 1));
+    if (seen.has(i)) continue;
+    seen.add(i);
+    const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+    const x = i === 0 ? Math.max(xAt(i) - 8, m.l - 8) : i === n - 1 ? Math.min(xAt(i) + 8, W - m.r + 8) : xAt(i);
+    svgEl.append(s('text', { class: 'ax-text', x, y, 'text-anchor': anchor }, fmtDay(rows[i].date)));
+  }
+}
+
+function yAxis(svgEl, sc, m, W, yOf) {
+  for (const t of sc.ticks) {
+    const y = yOf(t);
+    svgEl.append(s('line', { class: t === 0 ? 'ax-base' : 'ax-grid', x1: m.l, x2: W - m.r, y1: y, y2: y }));
+    svgEl.append(s('text', { class: 'ax-text', x: m.l - 8, y: y + 4, 'text-anchor': 'end' }, compact(t)));
+  }
+}
+
+function lineChart(host, rows, o) {
+  if (!rows.length) host.dataset.empty = '1';
+  registerChart(host, () => {
+    host.replaceChildren();
+    const W = host.clientWidth, H = o.height || 220;
+    const m = { t: 18, r: 14, b: 26, l: 46 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const n = rows.length;
+    const sc = niceScale(0, Math.max(0, ...rows.map((r) => r[o.key])));
+    const xAt = (i) => m.l + (n === 1 ? pw / 2 : (i / (n - 1)) * pw);
+    const yOf = (v) => m.t + ph - ((v - sc.lo) / (sc.hi - sc.lo)) * ph;
+    const svgEl = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', tabindex: 0, 'aria-label': `${o.title}. Dùng phím mũi tên trái/phải để xem từng ngày.` });
+    yAxis(svgEl, sc, m, W, yOf);
+    xLabels(svgEl, rows, xAt, H - 6, m, W);
+    const pts = rows.map((r, i) => [xAt(i), yOf(r[o.key])]);
+    svgEl.append(s('path', { class: 'area', d: `M${pts[0][0]},${yOf(0)} ` + pts.map((p) => `L${p[0]},${p[1]}`).join(' ') + ` L${pts[n - 1][0]},${yOf(0)} Z` }));
+    svgEl.append(s('path', { class: 'line', d: 'M' + pts.map((p) => p.join(',')).join(' L') }));
+    const last = pts[n - 1];
+    svgEl.append(s('circle', { class: 'dot', cx: last[0], cy: last[1], r: 4 }));
+    svgEl.append(s('text', { class: 'end-label', x: last[0], y: last[1] - 10, 'text-anchor': 'end' }, compact(rows[n - 1][o.key])));
+    const cross = s('line', { class: 'cross', y1: m.t, y2: m.t + ph, visibility: 'hidden' });
+    const hot = s('circle', { class: 'dot', r: 4, visibility: 'hidden' });
+    svgEl.append(cross, hot);
+    host.append(svgEl);
+    attachScrub(svgEl, host, n,
+      (px) => Math.max(0, Math.min(n - 1, Math.round(((px - m.l) / pw) * (n - 1)))),
+      (i, cx, cy) => {
+        cross.setAttribute('x1', pts[i][0]); cross.setAttribute('x2', pts[i][0]); cross.setAttribute('visibility', 'visible');
+        hot.setAttribute('cx', pts[i][0]); hot.setAttribute('cy', pts[i][1]); hot.setAttribute('visibility', 'visible');
+        const r = rows[i];
+        showTip([h('div', { class: 'tip-title' }, fmtDay(r.date) + '/' + r.date.slice(0, 4)), tipRow(fmt(r[o.key]), o.label, { key: true }), ...(o.extras || []).map((e) => tipRow(fmt(r[e.key]), e.label, { minor: true }))], cx, cy);
+      },
+      () => { cross.setAttribute('visibility', 'hidden'); hot.setAttribute('visibility', 'hidden'); });
+  });
+}
+
+function barChart(host, rows, o) {
+  if (!rows.length) host.dataset.empty = '1';
+  registerChart(host, () => {
+    host.replaceChildren();
+    const W = host.clientWidth, H = o.height || 220;
+    const m = { t: 18, r: 14, b: 26, l: 46 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const n = rows.length;
+    const vals = rows.map((r) => r[o.key]);
+    const sc = niceScale(Math.min(0, ...vals), Math.max(0, ...vals));
+    const slot = pw / n;
+    const bw = Math.max(2, Math.min(24, slot - 2)); // khe 2px giữa các cột
+    const xAt = (i) => m.l + slot * i + slot / 2;
+    const yOf = (v) => m.t + ph - ((v - sc.lo) / (sc.hi - sc.lo)) * ph;
+    const svgEl = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', tabindex: 0, 'aria-label': `${o.title}. Dùng phím mũi tên trái/phải để xem từng ngày.` });
+    yAxis(svgEl, sc, m, W, yOf);
+    xLabels(svgEl, rows, xAt, H - 6, m, W);
+    const marks = rows.map((r, i) => {
+      const v = r[o.key];
+      if (!v) return null;
+      const y0 = yOf(0), y1 = yOf(v);
+      const top = Math.min(y0, y1), hh = Math.max(1, Math.abs(y1 - y0));
+      const rad = Math.min(4, bw / 2, hh);
+      const x = xAt(i) - bw / 2;
+      // bo góc 4px ở đầu dữ liệu, vuông ở đường nền
+      const d = v > 0
+        ? `M${x},${top + hh} V${top + rad} Q${x},${top} ${x + rad},${top} H${x + bw - rad} Q${x + bw},${top} ${x + bw},${top + rad} V${top + hh} Z`
+        : `M${x},${top} V${top + hh - rad} Q${x},${top + hh} ${x + rad},${top + hh} H${x + bw - rad} Q${x + bw},${top + hh} ${x + bw},${top + hh - rad} V${top} Z`;
+      const p = s('path', { class: 'bar', d });
+      svgEl.append(p);
+      return p;
+    });
+    host.append(svgEl);
+    let on = null;
+    attachScrub(svgEl, host, n,
+      (px) => Math.max(0, Math.min(n - 1, Math.floor((px - m.l) / slot))),
+      (i, cx, cy) => {
+        if (on) on.classList.remove('on');
+        on = marks[i]; if (on) on.classList.add('on');
+        showTip([h('div', { class: 'tip-title' }, fmtDay(rows[i].date) + '/' + rows[i].date.slice(0, 4)), tipRow((rows[i][o.key] > 0 ? '+' : '') + fmt(rows[i][o.key]), o.label, { key: true })], cx, cy);
+      },
+      () => { if (on) on.classList.remove('on'); on = null; });
+  });
+}
+
+function sparkline(values, w = 96, hgt = 28) {
+  const pad = 5;
+  const max = Math.max(...values, 1);
+  const n = values.length;
+  if (!n) return document.createTextNode('');
+  const pts = values.map((v, i) => [pad + (n === 1 ? (w - 2 * pad) / 2 : (i / (n - 1)) * (w - 2 * pad)), hgt - pad - (v / max) * (hgt - 2 * pad)]);
+  const last = pts[n - 1];
+  return s('svg', { class: 'spark', width: w, height: hgt, viewBox: `0 0 ${w} ${hgt}`, 'aria-hidden': 'true' },
+    s('path', { d: 'M' + pts.map((p) => p.map((c) => c.toFixed(1)).join(',')).join(' L') }),
+    s('circle', { cx: last[0], cy: last[1], r: 4 }));
+}
+
+function hbars(items) {
+  const max = Math.max(...items.map((i) => i.value), 1);
+  const row = (it) => {
+    const w = Math.max(0, (it.value / max) * 100);
+    const inner = [
+      h('span', { class: 'hb-label' }, it.label, it.sub && h('small', null, it.sub)),
+      h('span', { class: 'hb-track' },
+        h('span', { class: 'hb-bar', style: `width:calc((100% - 64px) * ${w / 100})` }),
+        h('span', { class: 'hb-val' }, compact(it.value))),
+    ];
+    const on = (e) => showTip([h('div', { class: 'tip-title' }, it.label), tipRow(fmt(it.value), it.unit || '', { key: true }), it.sub && tipRow(it.sub, '', { minor: true })], e.clientX, e.clientY);
+    const attrs = { class: 'hb', onpointermove: on, onpointerleave: hideTip, onblur: hideTip };
+    return it.onClick ? h('button', { ...attrs, type: 'button', onclick: it.onClick, onfocus: (e) => { const r = e.target.getBoundingClientRect(); on({ clientX: r.left + 80, clientY: r.top }); } }, inner)
+      : h('div', attrs, inner);
+  };
+  return h('div', { class: 'hbars' }, items.map(row));
+}
+
+// Khối biểu đồ có nút chuyển "Biểu đồ | Bảng" (bảng dữ liệu tương đương cho mọi biểu đồ)
+function chartCard({ title, sub, rows, draw, columns }) {
+  const host = h('div', { class: 'chart' });
+  const tableHost = h('div', { hidden: true });
+  const mk = (label, which) => h('button', { type: 'button', 'aria-pressed': which === 'chart' ? 'true' : 'false', onclick: () => {
+    for (const b of toggle.children) b.setAttribute('aria-pressed', String(b === btnFor[which]));
+    host.hidden = which !== 'chart'; tableHost.hidden = which === 'chart';
+    if (which === 'chart') redrawCharts();
+    if (which === 'table' && !tableHost.firstChild) tableHost.append(dataTable(rows, columns));
+  } }, label);
+  const btnFor = {};
+  const toggle = h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Kiểu hiển thị' });
+  btnFor.chart = mk('Biểu đồ', 'chart'); btnFor.table = mk('Bảng', 'table');
+  toggle.append(btnFor.chart, btnFor.table);
+  const card = h('section', { class: 'card' },
+    h('div', { class: 'card-head' }, h('div', null, h('h2', { class: 'card-title' }, title), sub && h('p', { class: 'card-sub' }, sub)), toggle),
+    host, tableHost);
+  queueMicrotask(() => draw(host));
+  return card;
+}
+function dataTable(rows, columns) {
+  return h('table', { class: 'data' },
+    h('thead', null, h('tr', null, columns.map((c) => h('th', null, c.label)))),
+    h('tbody', null, [...rows].reverse().map((r) => h('tr', null, columns.map((c) => h('td', null, c.get(r)))))));
+}
+const DAILY_COLS = {
+  views: [{ label: 'Ngày', get: (r) => fmtDay(r.date) + '/' + r.date.slice(0, 4) }, { label: 'Views', get: (r) => fmt(r.views) }, { label: 'Reach', get: (r) => fmt(r.reach) }, { label: 'Tương tác', get: (r) => fmt(r.engagement) }],
+  followers: [{ label: 'Ngày', get: (r) => fmtDay(r.date) + '/' + r.date.slice(0, 4) }, { label: 'Follower mới', get: (r) => (r.followersGained > 0 ? '+' : '') + fmt(r.followersGained) }],
+};
+const viewsCard = (daily, days, h2 = 'Views theo ngày') => chartCard({
+  title: h2, sub: `${days} ngày gần nhất${partialNote(daily)}`, rows: daily, columns: DAILY_COLS.views,
+  draw: (host) => lineChart(host, daily, { key: 'views', label: 'views', title: h2, extras: [{ key: 'reach', label: 'reach' }, { key: 'engagement', label: 'tương tác' }] }),
+});
+const followersCard = (daily, days, h2 = 'Follower mới theo ngày') => chartCard({
+  title: h2, sub: `Tăng/giảm ròng mỗi ngày${partialNote(daily)}`, rows: daily, columns: DAILY_COLS.followers,
+  draw: (host) => barChart(host, daily, { key: 'followersGained', label: 'follower mới', title: h2 }),
+});
+
+// ---------- trạng thái ----------
+const state = {
+  tab: 'overview', days: 30, data: null, loading: false,
+  sort: { key: 'order', dir: 1 }, query: '', onlyIssues: false,
+};
+const STATIC_MODE = !!window.STATIC_MODE; // bản đăng lên artifact: dữ liệu từ ảnh chụp hằng ngày, không gọi Zernio
+const RANGES = window.STATIC_RANGES || [7, 14, 30, 60, 90];
+
+// ---------- các khối giao diện ----------
+function tile({ label, value, note, spark }) {
+  return h('div', { class: 'card tile' }, h('p', { class: 'tile-label' }, label), h('p', { class: 'tile-value' }, value), note, spark);
+}
+
+function renderKpis(sm) {
+  const days = state.data.range.days;
+  const vs = h('span', { class: 'dim' }, `so với ${days} ngày trước`);
+  const daily = sm.daily;
+  const hero = h('div', { class: 'card tile hero' },
+    h('p', { class: 'tile-label' }, 'Tổng follower'),
+    h('p', { class: 'tile-value' }, fmt(sm.followers.current)),
+    h('p', { class: 'tile-note' }, h('b', null, (sm.followers.gained >= 0 ? '+' : '−') + fmt(Math.abs(sm.followers.gained))), `trong ${days} ngày`, h('span', { class: 'dim' }, '·'), `${sm.accountCount} tài khoản / ${sm.counted} kênh`));
+  const tiles = [
+    tile({ label: 'Views', value: compact(sm.totals.views), note: h('p', { class: 'tile-note' }, delta(sm.totals.views, sm.prev.views), vs), spark: sparkline(daily.map((d) => d.views)) }),
+    tile({ label: 'Follower mới', value: (sm.followers.gained >= 0 ? '+' : '−') + compact(Math.abs(sm.followers.gained)), note: h('p', { class: 'tile-note' }, delta(sm.followers.gained, sm.followers.prevGained), vs), spark: sparkline(daily.map((d) => Math.max(0, d.followersGained))) }),
+    tile({ label: 'Reach', value: compact(sm.totals.reach), note: h('p', { class: 'tile-note' }, delta(sm.totals.reach, sm.prev.reach), vs), spark: sparkline(daily.map((d) => d.reach)) }),
+    tile({ label: 'Tương tác', value: compact(sm.totals.engagement), note: h('p', { class: 'tile-note' }, delta(sm.totals.engagement, sm.prev.engagement), vs), spark: sparkline(daily.map((d) => d.engagement)) }),
+    tile({ label: 'Bài đăng', value: fmt(sm.posts), note: h('p', { class: 'tile-note' }, `Tỷ lệ tương tác ${pct(sm.totals.er)}`, h('span', { class: 'dim' }, `(kỳ trước ${pct(sm.prev.er)})`)) }),
+  ];
+  return h('section', { class: 'kpis', 'aria-label': 'Chỉ số tổng' }, hero, ...tiles);
+}
+
+function renderAlerts(sm) {
+  if (!sm.alerts.length) return null;
+  return h('section', { class: 'card alerts', 'aria-label': 'Cần chú ý' },
+    h('div', { class: 'card-head' }, h('div', null, h('h2', { class: 'card-title' }, `Cần chú ý (${sm.alerts.length})`), h('p', { class: 'card-sub' }, 'Tài khoản hết hạn token hoặc kênh không lấy được dữ liệu — cần kết nối lại trên Zernio'))),
+    h('ul', { class: 'alert-list' }, sm.alerts.map((a) => h('li', null, h('button', { type: 'button', onclick: () => openDrawer(a.channel), title: a.detail || '' },
+      icon(a.state, 16),
+      h('span', null, h('span', { class: 'who' }, a.channel, a.platform ? ` · ${platformName(a.platform)}` : '', a.username ? ` ${handleOf(a.platform, a.username)}` : ''), h('br'), h('span', { class: 'why' }, a.reason)))))));
+}
+
+function renderCharts(d) {
+  const sm = d.summary, days = d.range.days;
+  const platformCard = h('section', { class: 'card' },
+    h('div', { class: 'card-head' }, h('div', null, h('h2', { class: 'card-title' }, 'Follower theo nền tảng'), h('p', { class: 'card-sub' }, 'Mỗi tài khoản chỉ đếm một lần'))),
+    hbars(sm.platforms.map((p) => ({ label: platformName(p.platform), sub: `${p.accounts} tài khoản`, value: p.followers, unit: 'follower' }))));
+  const top = d.channels.filter((c) => !c.error && !c.duplicateOf).sort((a, b) => b.totals.views - a.totals.views).slice(0, 8);
+  const topCard = h('section', { class: 'card' },
+    h('div', { class: 'card-head' }, h('div', null, h('h2', { class: 'card-title' }, 'Top kênh theo views'), h('p', { class: 'card-sub' }, `${days} ngày gần nhất`))),
+    hbars(top.map((c) => ({ label: c.label || c.name, sub: c.group, value: c.totals.views, unit: 'views', onClick: () => openDrawer(c.name) }))));
+  return h('div', { class: 'stack' },
+    h('div', { class: 'grid-2' }, viewsCard(sm.daily, days), followersCard(sm.daily, days)),
+    h('div', { class: 'grid-2 even', style: 'margin-top:16px' }, platformCard, topCard));
+}
+
+const COLS = [
+  { key: 'order', label: 'Kênh', left: true },
+  { key: 'accounts', label: 'Tài khoản', left: true, nosort: true },
+  { key: 'followers', label: 'Follower' },
+  { key: 'gained', label: 'Mới' },
+  { key: 'views', label: 'Views' },
+  { key: 'delta', label: 'vs kỳ trước' },
+  { key: 'reach', label: 'Reach' },
+  { key: 'engagement', label: 'Tương tác' },
+  { key: 'er', label: 'ER' },
+  { key: 'posts', label: 'Bài' },
+  { key: 'trend', label: 'Xu hướng views', nosort: true },
+];
+const metric = {
+  followers: (c) => c.followers?.current ?? 0,
+  gained: (c) => c.followers?.gained ?? 0,
+  views: (c) => c.totals?.views ?? 0,
+  delta: (c) => pctChange(c.totals?.views ?? 0, c.prev?.views ?? 0) ?? 1e9,
+  reach: (c) => c.totals?.reach ?? 0,
+  engagement: (c) => c.totals?.engagement ?? 0,
+  er: (c) => c.totals?.er ?? 0,
+  posts: (c) => c.posts ?? 0,
+};
+const channelIssues = (c) => !!c.error || c.accounts.some((a) => a.state !== 'ok');
+
+function renderTable(d) {
+  const wrap = h('section', { class: 'card', 'aria-label': 'Danh sách kênh' });
+  const body = h('div', { class: 'table-wrap' });
+  const countEl = h('p', { class: 'card-sub' });
+  const search = h('input', { class: 'search', type: 'search', placeholder: 'Tìm kênh hoặc tài khoản…', 'aria-label': 'Tìm kênh', value: state.query, oninput: (e) => { state.query = e.target.value; draw(); } });
+  const only = h('label', { class: 'check' }, h('input', { type: 'checkbox', onchange: (e) => { state.onlyIssues = e.target.checked; draw(); } }), 'Chỉ kênh có cảnh báo');
+  only.firstChild.checked = state.onlyIssues;
+  wrap.append(h('div', { class: 'card-head' }, h('div', null, h('h2', { class: 'card-title' }, 'Tất cả kênh'), countEl), h('div', { class: 'toolbar' }, search, only)), body);
+
+  function draw() {
+    const q = state.query.trim().toLowerCase();
+    let rows = d.channels.map((c, i) => ({ c, i }));
+    if (q) rows = rows.filter(({ c }) => [c.name, c.group, ...c.accounts.map((a) => a.username), ...c.accounts.map((a) => a.platform)].join(' ').toLowerCase().includes(q));
+    if (state.onlyIssues) rows = rows.filter(({ c }) => channelIssues(c));
+    const { key, dir } = state.sort;
+    if (key !== 'order') rows.sort((a, b) => (metric[key](b.c) - metric[key](a.c)) * dir || a.i - b.i);
+    countEl.textContent = `${rows.length}/${d.channels.length} kênh · bấm vào hàng để xem chi tiết`;
+
+    const head = h('tr', null, COLS.map((c) => {
+      const active = state.sort.key === c.key;
+      const arrow = active && c.key !== 'order' ? (state.sort.dir === 1 ? ' ↓' : ' ↑') : '';
+      return h('th', { class: c.left ? 'left' : '', scope: 'col', 'aria-sort': active && c.key !== 'order' ? (state.sort.dir === 1 ? 'descending' : 'ascending') : 'none' },
+        c.nosort ? c.label : h('button', { type: 'button', onclick: () => {
+          if (c.key === 'order') state.sort = { key: 'order', dir: 1 };
+          else if (state.sort.key === c.key) state.sort = state.sort.dir === 1 ? { key: c.key, dir: -1 } : { key: 'order', dir: 1 };
+          else state.sort = { key: c.key, dir: 1 };
+          draw();
+        } }, c.label + arrow));
+    }));
+
+    const trs = [];
+    let lastGroup = null;
+    for (const { c } of rows) {
+      if (key === 'order' && c.group !== lastGroup) { lastGroup = c.group; trs.push(h('tr', { class: 'group-row' }, h('td', { colspan: COLS.length }, c.group))); }
+      trs.push(channelRow(c));
+    }
+    if (!rows.length) trs.push(h('tr', null, h('td', { colspan: COLS.length }, h('div', { class: 'empty' }, 'Không có kênh nào khớp bộ lọc'))));
+
+    const sm = d.summary;
+    const foot = h('tfoot', null, h('tr', null,
+      h('td', { colspan: 2 }, `Tổng (${sm.counted} kênh, đã loại trùng)`),
+      h('td', null, fmt(sm.followers.current)), h('td', null, (sm.followers.gained > 0 ? '+' : '') + fmt(sm.followers.gained)),
+      h('td', null, fmt(sm.totals.views)), h('td', null, delta(sm.totals.views, sm.prev.views)),
+      h('td', null, fmt(sm.totals.reach)), h('td', null, fmt(sm.totals.engagement)), h('td', null, pct(sm.totals.er)), h('td', null, fmt(sm.posts)), h('td', null)));
+    body.replaceChildren(h('table', { class: 't' }, h('thead', null, head), h('tbody', null, trs), foot));
+  }
+  draw();
+  return wrap;
+}
+
+function channelRow(c) {
+  const open = () => openDrawer(c.name);
+  const tr = h('tr', { class: 'row' + (c.duplicateOf || c.error ? ' dim' : ''), tabindex: 0, role: 'button', 'aria-label': `Xem chi tiết kênh ${c.name}`, onclick: open, onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } } });
+  const chips = h('span', { class: 'chips' }, c.accounts.map((a) => {
+    const attrs = { class: 'chip', title: `${handleOf(a.platform, a.username)}${a.reason ? ' — ' + a.reason : ''}` };
+    const kids = [a.state !== 'ok' && icon(a.state, 12), platformName(a.platform)];
+    // Chip có link thì mở thẳng trang kênh, không mở ngăn chi tiết
+    return a.url
+      ? h('a', { ...attrs, class: 'chip link', href: a.url, target: '_blank', rel: 'noopener noreferrer', onclick: (e) => e.stopPropagation() }, kids)
+      : h('span', attrs, kids);
+  }));
+  const name = h('td', { class: 'name' }, c.label || c.name,
+    c.duplicateOf && h('span', { class: 'badge', title: 'Cùng tài khoản với kênh khác, không tính vào tổng' }, `trùng ${c.duplicateOf}`),
+    c.error && h('span', { class: 'badge' }, 'lỗi'),
+    h('small', null, c.group));
+  if (c.error) {
+    tr.append(name, h('td', { class: 'left', colspan: COLS.length - 1 }, statusBadge('error', c.error)));
+    return tr;
+  }
+  tr.append(name, h('td', { class: 'left' }, chips),
+    h('td', null, fmt(c.followers.current)),
+    h('td', null, (c.followers.gained > 0 ? '+' : '') + fmt(c.followers.gained)),
+    h('td', null, fmt(c.totals.views)),
+    h('td', null, c.prev.views || c.totals.views ? delta(c.totals.views, c.prev.views) : '—'),
+    h('td', null, fmt(c.totals.reach)), h('td', null, fmt(c.totals.engagement)),
+    h('td', null, c.totals.views ? pct(c.totals.er) : '—'),
+    h('td', null, fmt(c.posts)),
+    h('td', null, c.daily.length ? sparkline(c.daily.map((r) => r.views)) : '—'));
+  return tr;
+}
+
+function postRow(p, withChannel = true) {
+  const thumb = p.thumb
+    ? h('img', { class: 'thumb', src: p.thumb, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer', onerror: (e) => e.target.replaceWith(h('div', { class: 'thumb' }, p.mediaType === 'video' ? 'video' : 'ảnh')) })
+    : h('div', { class: 'thumb' }, p.mediaType === 'video' ? 'video' : 'bài');
+  return h('li', { class: 'post' }, thumb,
+    h('div', { class: 'post-body' },
+      h('p', { class: 'post-text' }, p.content || '(không có nội dung)'),
+      h('p', { class: 'post-meta' }, [withChannel && p.channel, platformName(p.platform), fmtDate(p.publishedAt)].filter(Boolean).join(' · '),
+        p.url && h('a', { class: 'post-link', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Mở bài ↗')),
+      watchText(p) && h('p', { class: 'post-meta' }, watchText(p))),
+    h('div', { class: 'post-stats' },
+      h('div', null, h('b', null, compact(p.views)), h('span', null, 'views')),
+      h('div', null, h('b', null, compact(p.likes)), h('span', null, 'thích')),
+      h('div', null, h('b', null, compact(p.comments + p.shares)), h('span', null, 'bl + chia sẻ')),
+      h('div', null, h('b', null, pct(p.er)), h('span', null, 'ER'))));
+}
+
+function renderTopPosts(posts) {
+  return h('section', { class: 'card' },
+    h('div', { class: 'card-head' }, h('div', null, h('h2', { class: 'card-title' }, 'Bài đăng nổi bật'), h('p', { class: 'card-sub' }, `Top ${posts.length} bài nhiều views nhất, đăng trong ${state.data.range.days} ngày gần nhất, toàn bộ kênh`))),
+    posts.length ? h('ul', { class: 'posts' }, posts.map((p) => postRow(p))) : h('div', { class: 'empty' }, 'Chưa có bài đăng trong khoảng thời gian này'));
+}
+
+// ---------- ngăn chi tiết kênh ----------
+let lastFocus = null;
+function openDrawer(name) {
+  const c = state.data.channels.find((x) => x.name === name);
+  if (!c) return;
+  lastFocus = document.activeElement;
+  const dr = $('drawer'), days = state.data.range.days;
+  dr.replaceChildren();
+  const close = h('button', { class: 'btn', type: 'button', onclick: closeDrawer, 'aria-label': 'Đóng' }, 'Đóng ✕');
+  dr.append(h('div', { class: 'drawer-head' },
+    h('div', null, h('h2', { id: 'drawer-title' }, c.label || c.name), h('p', { class: 'sub' }, c.group, c.duplicateOf ? ` · trùng tài khoản với ${c.duplicateOf}, không tính vào tổng` : '', c.sharedWith.length ? ` · dùng chung tài khoản với ${c.sharedWith.join(', ')}` : '')),
+    close));
+  if (c.error) {
+    dr.append(h('div', { class: 'card' }, statusBadge('error', c.error)));
+  } else {
+    if (c.warn) dr.append(h('div', { class: 'card' }, statusBadge('warning', c.warn)));
+    dr.append(h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', { class: 'card-title' }, `Tài khoản (${c.accounts.length})`)),
+      h('div', { class: 'acc-list' }, c.accounts.map(accountRow))));
+    const t = c.totals, p = c.prev;
+    const mini = (label, value, note) => h('div', { class: 'card tile' }, h('p', { class: 'tile-label' }, label), h('p', { class: 'tile-value' }, value), note && h('p', { class: 'tile-note' }, note));
+    dr.append(h('div', { class: 'mini' },
+      mini('Views', compact(t.views), delta(t.views, p.views)),
+      mini('Reach', compact(t.reach), delta(t.reach, p.reach)),
+      mini('Tương tác', compact(t.engagement), delta(t.engagement, p.engagement)),
+      mini('ER', pct(t.er), h('span', { class: 'dim' }, `kỳ trước ${pct(p.er)}`)),
+      mini('Follower mới', (c.followers.gained > 0 ? '+' : '') + fmt(c.followers.gained), delta(c.followers.gained, c.followers.prevGained)),
+      mini('Bài đăng', fmt(c.posts))));
+    dr.append(weeklyDrawerCard(c.name));
+    if (c.daily.length) dr.append(followerSeriesCard(c), viewsCard(c.daily, days), followersCard(c.daily, days));
+    dr.append(postsSection(c));
+    if (c.dataAsOf) dr.append(h('p', { class: 'note' }, `Số liệu Zernio cập nhật lúc ${fmtTime(c.dataAsOf)}. Follower mới tính từ lịch sử Zernio ghi nhận, tài khoản mới kết nối sẽ chỉ có dữ liệu từ ngày kết nối.`));
+  }
+  $('scrim').hidden = false; dr.hidden = false; dr.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  close.focus();
+  redrawCharts();
+}
+function closeDrawer() {
+  $('drawer').hidden = true; $('scrim').hidden = true; hideTip();
+  document.body.style.overflow = '';
+  if (lastFocus && lastFocus.isConnected) lastFocus.focus();
+}
+$('scrim').addEventListener('click', closeDrawer);
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('drawer').hidden) closeDrawer(); });
+
+function accountRow(a) {
+  const initial = (a.username || a.displayName || '?')[0].toUpperCase();
+  const av = a.avatar
+    ? h('img', { class: 'avatar', src: a.avatar, alt: '', referrerpolicy: 'no-referrer', onerror: (e) => e.target.replaceWith(h('div', { class: 'avatar' }, initial)) })
+    : h('div', { class: 'avatar' }, initial);
+  const name = handleOf(a.platform, a.username);
+  return h('div', { class: 'acc' }, av,
+    h('div', { style: 'min-width:0' },
+      h('div', { class: 'acc-name' }, a.url ? h('a', { href: a.url, target: '_blank', rel: 'noopener noreferrer' }, name) : name, h('span', { class: 'badge' }, platformName(a.platform))),
+      h('div', { class: 'acc-sub' }, statusBadge(a.state, a.state === 'ok' ? STATE_LABEL.ok : a.reason), a.state === 'ok' && a.tokenExpiresAt && a.platform !== 'tiktok' ? h('span', { class: 'dim', style: 'color:var(--muted)' }, ` · token đến ${fmtDate(a.tokenExpiresAt)}`) : null),
+      a.state !== 'ok' && a.detail ? h('div', { class: 'note' }, a.detail) : null),
+    h('div', { class: 'acc-fol' }, h('b', null, fmt(a.followers)), a.gained == null ? null : h('span', { class: 'note' }, `${a.gained > 0 ? '+' : ''}${fmt(a.gained)} trong kỳ`)));
+}
+
+function postsSection(c) {
+  const list = h('div', null);
+  const toggle = h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Sắp xếp bài đăng' });
+  const sorts = [['views', 'Nhiều views nhất'], ['engagement', 'Tương tác nhiều nhất'], ['completion_rate', 'Xem hết cao nhất'], ['date', 'Mới nhất']];
+  const cache = {};
+  async function load(sort) {
+    for (const b of toggle.children) b.setAttribute('aria-pressed', String(b.dataset.sort === sort));
+    list.replaceChildren(h('div', { class: 'empty' }, 'Đang tải bài đăng…'));
+    try {
+      if (!cache[sort]) {
+        const res = await fetch(`/api/channel/${encodeURIComponent(c.name)}/posts?days=${state.data.range.days}&sort=${sort}&limit=15`);
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.error || res.statusText);
+        cache[sort] = j.posts;
+      }
+      list.replaceChildren(cache[sort].length ? h('ul', { class: 'posts' }, cache[sort].map((p) => postRow(p, false))) : h('div', { class: 'empty' }, 'Chưa có bài đăng trong khoảng thời gian này'));
+    } catch (err) {
+      list.replaceChildren(h('div', { class: 'empty' }, `Không tải được bài đăng: ${err.message}`));
+    }
+  }
+  for (const [k, label] of sorts) toggle.append(h('button', { type: 'button', 'data-sort': k, 'aria-pressed': 'false', onclick: () => load(k) }, label));
+  queueMicrotask(() => load('views'));
+  return h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', { class: 'card-title' }, 'Bài đăng'), toggle), list);
+}
+
+// ---------- tải dữ liệu & vẽ ----------
+function render() {
+  const d = state.data;
+  $('sub').textContent = `Nguồn: Zernio · ${d.summary.counted}/${d.channels.length} kênh được tính · ${d.range.from} → ${d.range.to}`;
+  $('updated').textContent = `Cập nhật ${fmtTime(d.generatedAt)}`;
+  if (state.tab !== 'overview') return; // tab khác tự vẽ từ snapshot
+  const nodes = [renderKpis(d.summary), renderAlerts(d.summary), renderCharts(d), renderTable(d), renderTopPosts(d.topPosts)].filter(Boolean);
+  $('content').replaceChildren(...nodes);
+}
+
+function renderRange() {
+  $('range').replaceChildren(...RANGES.map((n) => h('button', { type: 'button', 'aria-pressed': String(n === state.days), onclick: () => { if (n !== state.days) { state.days = n; renderRange(); load(); } } }, `${n} ngày`)));
+}
+
+let pollTimer = 0;
+async function load(refresh = false) {
+  if (state.loading) return;
+  state.loading = true;
+  const days = state.days;
+  const content = $('content');
+  $('btn-refresh').disabled = true;
+  const onOverview = state.tab === 'overview'; // tab khác tự vẽ từ snapshot, không bị tải nền làm nhấp nháy
+  if (onOverview) $('banner').replaceChildren();
+  if (state.data && onOverview) content.classList.add('is-loading');
+  else if (onOverview) content.replaceChildren(h('div', { class: 'card loading-card' }, h('p', { id: 'load-text' }, 'Đang tải dữ liệu từ Zernio…'), h('div', { class: 'bar-progress' }, h('i', { id: 'load-bar', style: 'width:0%' }))));
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const st = await (await fetch(`/api/status?days=${days}`)).json();
+      const t = $('load-text'), b = $('load-bar');
+      if (t && st.loading) { t.textContent = `Đang tải dữ liệu từ Zernio… ${st.done}/${st.total} kênh`; b.style.width = (st.done / st.total) * 100 + '%'; }
+    } catch { /* bỏ qua */ }
+  }, 500);
+  try {
+    const res = await fetch(`/api/overview?days=${days}${refresh ? '&refresh=1' : ''}`);
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || res.statusText);
+    if (days !== state.days) return;
+    state.data = j;
+    render();
+  } catch (err) {
+    if (state.tab === 'overview') {
+      $('banner').replaceChildren(h('div', { class: 'banner' }, icon('error', 16), `Không tải được dữ liệu: ${err.message}`, h('button', { class: 'btn', type: 'button', onclick: () => load(true) }, 'Thử lại')));
+      if (!state.data) $('content').replaceChildren();
+    }
+  } finally {
+    clearInterval(pollTimer);
+    state.loading = false;
+    content.classList.remove('is-loading');
+    $('btn-refresh').disabled = false;
+    if (days !== state.days) load();
+  }
+}
+
+// ---------- giao diện sáng/tối ----------
+function effectiveTheme() {
+  return document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+function paintThemeButton() {
+  const dark = effectiveTheme() === 'dark';
+  $('btn-theme').replaceChildren(dark
+    ? s('svg', { width: 16, height: 16, viewBox: '0 0 16 16', 'aria-hidden': 'true' }, s('circle', { cx: 8, cy: 8, r: 3, fill: 'currentColor' }), s('path', { d: 'M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' }))
+    : s('svg', { width: 16, height: 16, viewBox: '0 0 16 16', 'aria-hidden': 'true' }, s('path', { d: 'M13 9.5A5.5 5.5 0 016.5 3 5.5 5.5 0 108 13.5a5.5 5.5 0 005-4z', fill: 'currentColor' })));
+}
+try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch { /* không có localStorage */ }
+$('btn-theme').addEventListener('click', () => {
+  const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('theme', next); } catch { /* bỏ qua */ }
+  paintThemeButton();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintThemeButton);
+paintThemeButton();
+
+$('btn-refresh').addEventListener('click', () => (state.tab === 'overview' ? load(true) : showTab()));
+if (STATIC_MODE) $('btn-refresh').hidden = true; // dữ liệu chỉ đổi khi trang được xuất bản lại
+else setInterval(() => { if (!document.hidden && !state.loading && state.data && Date.now() - new Date(state.data.generatedAt) > 10 * 60 * 1000) load(); }, 60 * 1000);
+renderRange();
+load();
+
+;
+'use strict';
+// Các màn dựa trên snapshot hằng ngày: Top video, Đánh giá tuần, và các khối bổ sung trong ngăn chi tiết kênh.
+// Dùng chung tiện ích (h, fmt, pct, compact, chartCard, lineChart…) và biến `state` của app.js.
+
+// ---------- tab ----------
+const TABS = [['overview', 'Tổng quan'], ['videos', 'Top video'], ['weekly', 'Đánh giá tuần']];
+
+function renderTabs() {
+  $('tabs').replaceChildren(...TABS.map(([key, label]) => h('button', {
+    type: 'button', class: 'tab', role: 'tab', 'aria-selected': String(state.tab === key),
+    onclick: () => setTab(key),
+  }, label)));
+  $('range-filter').hidden = state.tab !== 'overview';
+}
+
+function setTab(tab) {
+  if (state.tab === tab) return;
+  state.tab = tab;
+  try { localStorage.setItem('tab', tab); } catch { /* bỏ qua */ }
+  renderTabs();
+  showTab();
+}
+
+function showTab() {
+  $('banner').replaceChildren();
+  if (state.tab === 'videos') return renderVideosTab();
+  if (state.tab === 'weekly') return renderWeeklyTab();
+  if (state.data) render();
+  else $('content').replaceChildren(h('div', { class: 'card loading-card' }, h('p', null, 'Đang tải dữ liệu từ Zernio…')));
+}
+
+async function getJson(url) {
+  const res = await fetch(url);
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j.error || res.statusText);
+  return j;
+}
+
+const loadingCard = (text) => h('div', { class: 'card loading-card' }, h('p', null, text));
+const emptyCard = (text) => h('div', { class: 'card' }, h('div', { class: 'empty' }, text));
+
+function select(label, options, value, onChange) {
+  const el = h('select', { class: 'sel', 'aria-label': label, onchange: (e) => onChange(e.target.value) },
+    options.map(([v, text]) => h('option', { value: v }, text)));
+  el.value = value;
+  return h('label', { class: 'sel-wrap' }, h('span', null, label), el);
+}
+
+// ---------- chỉ số giữ chân ----------
+const watchText = (p) => {
+  const parts = [];
+  if (p.completion != null) parts.push(`${dec(p.completion, 1)}% xem hết`);
+  if (p.watchSec != null) parts.push(`TB ${dec(p.watchSec, 1)}s`);
+  if (p.retention != null) parts.push(`${dec(p.retention, 0)}% độ dài`);
+  return parts.join(' · ');
+};
+
+// ---------- tab Top video ----------
+const vstate = { days: 7, sort: 'engagement', platform: '', channel: '' };
+
+async function renderVideosTab() {
+  const content = $('content');
+  content.replaceChildren(loadingCard('Đang tải top video…'));
+  const q = new URLSearchParams({ days: vstate.days, sort: vstate.sort, limit: 50 });
+  if (vstate.platform) q.set('platform', vstate.platform);
+  if (vstate.channel) q.set('channel', vstate.channel);
+  let j;
+  try { j = await getJson(`/api/top-posts?${q}`); } catch (err) {
+    if (state.tab === 'videos') content.replaceChildren(emptyCard(err.message));
+    return;
+  }
+  if (state.tab !== 'videos') return;
+
+  const redo = (patch) => { Object.assign(vstate, patch); renderVideosTab(); };
+  const filters = h('div', { class: 'toolbar' },
+    select('Khoảng thời gian', [[1, '24 giờ'], [3, '3 ngày'], [7, '7 ngày'], [14, '14 ngày'], [30, '30 ngày']], vstate.days, (v) => redo({ days: Number(v) })),
+    select('Xếp theo', [['engagement', 'Tương tác'], ['views', 'Lượt xem'], ['er', 'Tỷ lệ tương tác'], ['completion', 'Tỷ lệ xem hết'], ['date', 'Mới nhất']], vstate.sort, (v) => redo({ sort: v })),
+    select('Nền tảng', [['', 'Tất cả'], ...j.platforms.map((p) => [p, platformName(p)])], vstate.platform, (v) => redo({ platform: v })),
+    select('Kênh', [['', 'Tất cả'], ...j.channels.map((c) => [c, c])], vstate.channel, (v) => redo({ channel: v })));
+
+  const cols = ['Video', 'Kênh', 'Đăng', 'Views', 'Thích', 'BL', 'Chia sẻ', 'Lưu', 'ER', 'Xem hết', 'Xem TB'];
+  const rows = j.posts.map((p) => h('tr', null,
+    h('td', { class: 'left vid' }, postThumb(p), h('span', { class: 'vid-body' },
+      h('span', { class: 'vid-text' }, p.content || '(không có nội dung)'),
+      p.url && h('a', { class: 'post-link', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Mở bài ↗'))),
+    h('td', { class: 'left' }, p.channel, h('small', { class: 'dim' }, ` ${platformName(p.platform)}`)),
+    h('td', null, fmtDate(p.publishedAt)),
+    h('td', null, fmt(p.views)), h('td', null, fmt(p.likes)), h('td', null, fmt(p.comments)), h('td', null, fmt(p.shares)), h('td', null, fmt(p.saves)),
+    h('td', null, p.views ? pct(p.er) : '—'),
+    h('td', null, p.completion != null ? dec(p.completion, 1) + '%' : '—'),
+    h('td', null, p.watchSec != null ? dec(p.watchSec, 1) + 's' : '—')));
+
+  content.replaceChildren(h('section', { class: 'card' },
+    h('div', { class: 'card-head' },
+      h('div', null, h('h2', { class: 'card-title' }, 'Top video'),
+        h('p', { class: 'card-sub' }, `${fmt(j.total)} bài khớp bộ lọc, hiển thị ${j.posts.length} · snapshot ${fmtTime(j.generatedAt)}. Xếp theo tỷ lệ chỉ tính bài từ 100 views trở lên.`)),
+      filters),
+    j.posts.length
+      ? h('div', { class: 'table-wrap' }, h('table', { class: 't vt' }, h('thead', null, h('tr', null, cols.map((c, i) => h('th', { class: i < 2 ? 'left' : '' }, c)))), h('tbody', null, rows)))
+      : h('div', { class: 'empty' }, 'Không có bài nào khớp bộ lọc'),
+    h('p', { class: 'note', style: 'margin-top:12px' }, 'ER = (thích + bình luận + chia sẻ + lưu) / views. Tỷ lệ xem hết và thời gian xem trung bình chỉ có ở nền tảng Zernio cung cấp (hiện chủ yếu TikTok); Facebook chỉ có thời gian xem trung bình.')));
+}
+
+function postThumb(p) {
+  const label = p.mediaType === 'video' ? 'video' : 'ảnh';
+  return p.thumb
+    ? h('img', { class: 'thumb sm', src: p.thumb, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer', onerror: (e) => e.target.replaceWith(h('div', { class: 'thumb sm' }, label)) })
+    : h('div', { class: 'thumb sm' }, label);
+}
+
+// ---------- tab Đánh giá tuần ----------
+const GRADE = {
+  surge: { label: 'Tăng tốc', tone: 'good', rank: 0 },
+  growing: { label: 'Tăng trưởng tốt', tone: 'good', rank: 1 },
+  steady: { label: 'Ổn định', tone: 'muted', rank: 2 },
+  slowing: { label: 'Chững lại', tone: 'warning', rank: 3 },
+  declining: { label: 'Giảm', tone: 'critical', rank: 4 },
+  inactive: { label: 'Không đăng bài', tone: 'critical', rank: 5 },
+  nodata: { label: 'Thiếu dữ liệu', tone: 'muted', rank: 6 },
+};
+const gradeBadge = (g) => h('span', { class: `grade ${(GRADE[g] || GRADE.nodata).tone}` }, (GRADE[g] || GRADE.nodata).label);
+const signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
+const wstate = { week: '', group: '', sort: 'grade' };
+
+async function renderWeeklyTab() {
+  const content = $('content');
+  content.replaceChildren(loadingCard('Đang tải báo cáo tuần…'));
+  let w;
+  try { w = await getJson(`/api/weekly${wstate.week ? `?week=${wstate.week}` : ''}`); } catch (err) {
+    if (state.tab === 'weekly') content.replaceChildren(emptyCard(err.message));
+    return;
+  }
+  if (state.tab !== 'weekly') return;
+
+  const groups = [...new Set(w.channels.map((c) => c.group))];
+  let rows = w.channels.filter((c) => !wstate.group || c.group === wstate.group);
+  const by = {
+    grade: (a, b) => (GRADE[a.grade]?.rank ?? 9) - (GRADE[b.grade]?.rank ?? 9) || (b.week?.views || 0) - (a.week?.views || 0),
+    views: (a, b) => (b.week?.views || 0) - (a.week?.views || 0),
+    growth: (a, b) => (b.viewsChange ?? -1e9) - (a.viewsChange ?? -1e9),
+    followers: (a, b) => (b.followerGain || 0) - (a.followerGain || 0),
+    er: (a, b) => (b.week?.er || 0) - (a.week?.er || 0),
+  };
+  rows = [...rows].sort(by[wstate.sort]);
+  const redo = (patch) => { Object.assign(wstate, patch); renderWeeklyTab(); };
+
+  const counts = {};
+  for (const c of w.channels) counts[c.grade] = (counts[c.grade] || 0) + 1;
+  const summary = h('div', { class: 'wk-summary' }, Object.entries(GRADE).filter(([k]) => counts[k]).map(([k, g]) =>
+    h('div', { class: 'card tile' }, h('p', { class: 'tile-label' }, g.label), h('p', { class: 'tile-value' }, String(counts[k])))));
+
+  const toolbar = h('div', { class: 'toolbar' },
+    select('Tuần', (w.weeks.length ? w.weeks : [w.week]).map((k) => [k, k]), w.week, (v) => redo({ week: v })),
+    select('Nhóm', [['', 'Tất cả'], ...groups.map((g) => [g, g])], wstate.group, (v) => redo({ group: v })),
+    select('Xếp theo', [['grade', 'Đánh giá'], ['views', 'Views'], ['growth', '% views so với tuần trước'], ['followers', 'Follower tăng'], ['er', 'Tỷ lệ tương tác']], wstate.sort, (v) => redo({ sort: v })));
+
+  content.replaceChildren(
+    h('section', { class: 'card' },
+      h('div', { class: 'card-head' },
+        h('div', null, h('h2', { class: 'card-title' }, `Đánh giá tuần ${w.week}`),
+          h('p', { class: 'card-sub' }, `${w.from} → ${w.to} · so với 7 ngày liền trước · ER trung vị hệ thống ${w.systemMedianEr != null ? pct(w.systemMedianEr) : '—'}`)),
+        toolbar),
+      h('p', { class: 'note' }, 'Điểm dựa trên: thay đổi views, follower ròng, tỷ lệ tương tác so với trung vị hệ thống. Nhận xét nội dung là phân tích số liệu từng bài (bài nổi bật, bài kém, tần suất, tỷ lệ xem hết), chưa đọc nội dung video.')),
+    summary,
+    h('div', { class: 'wk-grid' }, rows.map(weeklyCard)));
+}
+
+function weeklyCard(c) {
+  if (!c.week) return h('section', { class: 'card wk' }, h('div', { class: 'wk-head' }, h('h3', { class: 'card-title' }, c.label || c.name), gradeBadge(c.grade)), h('p', { class: 'note' }, (c.insights || []).join(' ')));
+  const w = c.week, p = c.prev;
+  const metric = (label, value, note) => h('div', null, h('span', { class: 'm-label' }, label), h('b', null, value), note && h('span', { class: 'm-note' }, note));
+  return h('section', { class: 'card wk' },
+    h('div', { class: 'wk-head' }, h('div', null, h('h3', { class: 'card-title' }, c.label || c.name), h('p', { class: 'card-sub' }, c.group)), gradeBadge(c.grade)),
+    h('div', { class: 'wk-metrics' },
+      metric('Follower', fmt(c.followers), `${signed(c.followerGain)}${c.followerGainPct != null ? ` (${c.followerGainPct >= 0 ? '+' : '−'}${dec(Math.abs(c.followerGainPct), 1)}%)` : ''}`),
+      metric('Views', compact(w.views), c.viewsChange != null ? delta(w.views, p.views) : `trước ${compact(p.views)}`),
+      metric('Tương tác', w.views ? pct(w.er) : '—', p.views ? `trước ${pct(p.er)}` : null),
+      metric('Bài đăng', fmt(w.posts), `trước ${fmt(p.posts)}`),
+      metric('Xem hết', w.completion != null ? dec(w.completion, 1) + '%' : '—', w.watchSec != null ? `TB ${dec(w.watchSec, 1)}s` : null)),
+    h('ul', { class: 'insights' }, c.insights.map((t) => h('li', null, t))),
+    commentaryBlock(c),
+    c.platforms?.length ? h('p', { class: 'note' }, c.platforms.map((x) => `${platformName(x.platform)}: ${x.posts} bài, ${compact(x.views)} views, ER ${x.views ? pct(x.er) : '—'}`).join(' · ')) : null,
+    c.topPosts?.length ? h('details', { class: 'wk-posts' }, h('summary', null, `Top ${c.topPosts.length} bài trong tuần`),
+      h('ul', { class: 'posts' }, c.topPosts.map((tp) => weeklyPost(tp)))) : null);
+}
+
+// Nhận xét nội dung do Claude viết hằng tuần (nếu đã có cho tuần này).
+function commentaryBlock(c) {
+  return c.commentary
+    ? h('div', { class: 'commentary' }, h('b', null, c.commentaryWeek ? `Nhận xét nội dung (tuần ${c.commentaryWeek})` : 'Nhận xét nội dung'), h('p', null, c.commentary))
+    : null;
+}
+
+function weeklyPost(p) {
+  return h('li', { class: 'post' }, postThumb(p),
+    h('div', { class: 'post-body' }, h('p', { class: 'post-text' }, p.content || '(không có nội dung)'),
+      h('p', { class: 'post-meta' }, [platformName(p.platform), fmtDate(p.publishedAt), watchText(p)].filter(Boolean).join(' · '),
+        p.url && h('a', { class: 'post-link', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Mở bài ↗'))),
+    h('div', { class: 'post-stats' },
+      h('div', null, h('b', null, compact(p.views)), h('span', null, 'views')),
+      h('div', null, h('b', null, compact(p.likes)), h('span', null, 'thích')),
+      h('div', null, h('b', null, p.views ? pct(p.er) : '—'), h('span', null, 'ER'))));
+}
+
+// ---------- bổ sung cho ngăn chi tiết kênh ----------
+
+// Số follower theo ngày dựng ngược từ mức tăng ròng mỗi ngày của Zernio (chính xác với số hiện tại, ước tính cho quá khứ).
+function followerSeriesCard(c) {
+  const daily = c.daily || [];
+  if (daily.length < 2) return null;
+  const rows = new Array(daily.length);
+  let cur = c.followers.current;
+  for (let i = daily.length - 1; i >= 0; i--) {
+    rows[i] = { date: daily[i].date, followers: Math.max(0, cur), gained: daily[i].followersGained };
+    cur -= daily[i].followersGained;
+  }
+  return chartCard({
+    title: 'Tổng follower theo ngày', sub: 'Dựng ngược từ số hiện tại và mức tăng/giảm ròng mỗi ngày',
+    rows, columns: [{ label: 'Ngày', get: (r) => fmtDay(r.date) + '/' + r.date.slice(0, 4) }, { label: 'Follower', get: (r) => fmt(r.followers) }, { label: 'Thay đổi', get: (r) => signed(r.gained) }],
+    draw: (host) => lineChart(host, rows, { key: 'followers', label: 'follower', title: 'Tổng follower theo ngày' }),
+  });
+}
+
+// Đánh giá tuần của kênh, nạp bất đồng bộ từ báo cáo mới nhất.
+function weeklyDrawerCard(name) {
+  const box = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', { class: 'card-title' }, 'Đánh giá tuần')), h('div', { class: 'empty' }, 'Đang tải…'));
+  getJson('/api/weekly').then((w) => {
+    const c = w.channels.find((x) => x.name === name);
+    box.replaceChildren(
+      h('div', { class: 'card-head' }, h('div', null, h('h3', { class: 'card-title' }, `Đánh giá tuần ${w.week}`), h('p', { class: 'card-sub' }, `${w.from} → ${w.to}`)), c ? gradeBadge(c.grade) : null),
+      c ? h('ul', { class: 'insights' }, c.insights.map((t) => h('li', null, t)))
+        : h('p', { class: 'note' }, 'Kênh này không có trong báo cáo tuần (có thể trùng tài khoản với kênh khác).'),
+      c ? commentaryBlock(c) : null);
+  }).catch((err) => box.replaceChildren(h('div', { class: 'card-head' }, h('h3', { class: 'card-title' }, 'Đánh giá tuần')), h('p', { class: 'note' }, err.message)));
+  return box;
+}
+
+// ---------- khởi động ----------
+try { const t = localStorage.getItem('tab'); if (TABS.some(([k]) => k === t)) state.tab = t; } catch { /* không có localStorage */ }
+renderTabs();
+if (state.tab !== 'overview') showTab();
+
+</script>
+<script>
+fetch('data.json').then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (d) {
+  window.__SNAPSHOT__ = d;
+  var s = document.createElement('script');
+  s.textContent = document.getElementById('app-src').textContent;
+  document.body.appendChild(s);
+}).catch(function (e) {
+  document.getElementById('content').textContent = 'Không tải được dữ liệu: ' + e.message;
+});
+</script>
