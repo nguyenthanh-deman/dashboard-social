@@ -12,7 +12,9 @@
     { "group": "Vesper", "channels": ["VESPER1", "VESPER2"] },
     { "group": "Dema Nail Lab", "channels": ["DEMANAILAB1", "DEMANAILAB2"] },
     { "group": "Ông Anh Oniiz", "channels": ["ONGANHONIIZ1", "ONGANHONIIZ2"] },
-    { "group": "EQ Gym", "channels": ["EQGYM1", "EQGYM", "duyyhoang", "ngocc.hii", "thanhtam.ng"] }
+    { "group": "EQ Gym", "channels": ["EQGYM1", "EQGYM", "duyyhoang", "ngocc.hii", "thanhtam.ng"] },
+    { "group": "ONIIZ Thái", "channels": ["ONIIZ_THAI_1", "ONIIZ_THAI_2"] },
+    { "group": "NSCK", "channels": ["NSCK1"] }
   ],
   "_labels_note": "Tên hiển thị trên dashboard. Khóa là tên kênh ở trên; không có thì hiện nguyên tên khóa.",
   "labels": {
