@@ -306,6 +306,106 @@ table.data th { color: var(--ink-2); font-weight: 600; position: sticky; top: 0;
 .commentary { border-left: 3px solid var(--series-1); padding: 2px 0 2px 10px; font-size: 13px; }
 .commentary p { margin: 2px 0 0; color: var(--ink-2); }
 
+/* ================= PREMIUM UI — luôn tối, trung tính gần đen =================
+   Ghi đè token (kể cả khi trình duyệt/nút chọn giao diện sáng) → thẻ, bảng, ngăn kéo tự đổi. */
+:root, :root[data-theme="light"], :root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b0b0c;
+  --surface: #141415;
+  --ink: #ededee;
+  --ink-2: #b4b4b8;
+  --muted: #77777d;
+  --grid: rgb(255 255 255 / 0.06);
+  --axis: rgb(255 255 255 / 0.12);
+  --border: rgb(255 255 255 / 0.07);
+  --wash: rgb(255 255 255 / 0.05);
+  --series-1: #5b9cf6;
+  --track: rgb(255 255 255 / 0.08);
+  --good: #3ddc97;
+  --warning: #f5c542;
+  --critical: #f06b6b;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+}
+#btn-theme { display: none; } /* dashboard luôn tối */
+body { letter-spacing: -0.005em; }
+
+.top { background: rgb(11 11 12 / 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 30; }
+.brand h1 { font-size: 17px; font-weight: 500; letter-spacing: -0.02em; }
+.sub, .updated { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.btn { background: linear-gradient(180deg, rgb(255 255 255 / .06), rgb(255 255 255 / .02)); box-shadow: inset 0 1px 0 rgb(255 255 255 / .06); }
+.btn:hover { background: rgb(255 255 255 / .09); }
+
+/* thẻ kiểu kính tối */
+.card {
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01)), var(--surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+}
+.card-title { font-weight: 500; }
+.card-sub { color: var(--muted); }
+
+/* tab + bộ lọc */
+.tab[aria-selected="true"] { font-weight: 500; border-bottom-color: var(--ink); }
+.seg { background: rgb(255 255 255 / .03); }
+.seg button[aria-pressed="true"] {
+  font-weight: 500;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.05));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 0 0 1px rgb(255 255 255 / 0.06), 0 2px 6px rgb(0 0 0 / 0.4);
+}
+.seg button[aria-pressed="true"]::before { content: none; }
+.view-toggle button[aria-pressed="true"] { font-weight: 500; }
+
+/* KPI: số mảnh tabular, dòng phụ mono */
+.tile-label { color: var(--ink-2); font-size: 13px; }
+.tile-value { font-weight: 500; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.hero .tile-value { font-weight: 400; }
+.tile-note { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.delta { font-weight: 500; }
+.hero { position: relative; overflow: hidden; }
+.hero::after { /* thẻ ngân hàng 3D trang trí */
+  content: ""; position: absolute; right: 18px; top: 18px; width: 92px; height: 58px; border-radius: 10px;
+  background: radial-gradient(circle at 18px 28px, #cfcfd3 0 7px, transparent 8px), linear-gradient(135deg, #3a3a3e 0%, #1c1c1f 45%, #0e0e10 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 14px 24px -6px rgb(0 0 0 / 0.8);
+  transform: perspective(300px) rotateX(18deg) rotateZ(-8deg); opacity: .9; pointer-events: none;
+}
+.spark path { stroke: var(--ink-2); }
+.alerts { border-color: var(--border); }
+.alert-list .who { font-weight: 500; }
+
+/* biểu đồ: đường cong + quầng sáng, cột xám, chỉ cột đỉnh/đang trỏ sáng màu */
+.line.glow { stroke-width: 8; opacity: .18; filter: blur(4px); }
+.area { opacity: .08; }
+.end-label { font-weight: 500; font-family: var(--mono); }
+.ax-text { font-family: var(--mono); font-size: 10.5px; }
+.bar { fill: rgb(255 255 255 / 0.13); transition: fill .1s; }
+.bar.peak, .bar.on { fill: var(--series-1); filter: drop-shadow(0 0 6px rgb(91 156 246 / .55)); }
+.hb-bar { height: 3px; border-radius: 2px; background: linear-gradient(90deg, rgb(91 156 246 / .35), var(--series-1)); }
+.hb-val { font-family: var(--mono); font-weight: 500; font-size: 12px; }
+
+/* tooltip, ngăn kéo */
+.tip { background: #1b1b1d; box-shadow: 0 10px 30px rgb(0 0 0 / .6); }
+.scrim { background: rgba(0, 0, 0, .6); backdrop-filter: blur(2px); }
+.drawer { box-shadow: -12px 0 48px rgb(0 0 0 / .6); }
+.drawer-head h2 { font-weight: 500; letter-spacing: -0.02em; }
+
+/* bảng */
+.t th { font-weight: 500; color: var(--muted); font-size: 12px; }
+.t th button { font-weight: 500; }
+.t td:not(:first-child), .t tfoot td:not(:first-child) { font-family: var(--mono); font-size: 12.5px; }
+.t tr.group-row td { font-family: var(--font); font-weight: 500; text-transform: none; letter-spacing: 0; background: rgb(255 255 255 / .02); }
+.t tfoot td { background: rgb(255 255 255 / .02); font-weight: 500; }
+.t .name { font-weight: 500; }
+.badge, .chip { background: transparent; }
+.grade { font-weight: 500; background: rgb(255 255 255 / .03); }
+.grade.good::before { box-shadow: 0 0 8px var(--good); }
+.grade.warning::before { box-shadow: 0 0 8px var(--warning); }
+.grade.critical::before { box-shadow: 0 0 8px var(--critical); }
+.commentary { border-left-color: rgb(255 255 255 / .18); }
+.search, .sel { background: rgb(255 255 255 / .03); }
+.wk-metrics b, .post-stats b, .acc-fol b { font-family: var(--mono); font-weight: 500; }
+.avatar, .thumb { background: rgb(255 255 255 / .05); }
+@media (max-width: 860px) { .hero::after { display: none; } }
+
 </style>
 <header class="top">
   <div class="wrap top-in">
@@ -610,8 +710,10 @@ function lineChart(host, rows, o) {
     yAxis(svgEl, sc, m, W, yOf);
     xLabels(svgEl, rows, xAt, H - 6, m, W);
     const pts = rows.map((r, i) => [xAt(i), yOf(r[o.key])]);
-    svgEl.append(s('path', { class: 'area', d: `M${pts[0][0]},${yOf(0)} ` + pts.map((p) => `L${p[0]},${p[1]}`).join(' ') + ` L${pts[n - 1][0]},${yOf(0)} Z` }));
-    svgEl.append(s('path', { class: 'line', d: 'M' + pts.map((p) => p.join(',')).join(' L') }));
+    const curve = monotonePath(pts);
+    svgEl.append(s('path', { class: 'area', d: curve + ` L${pts[n - 1][0]},${yOf(0)} L${pts[0][0]},${yOf(0)} Z` }));
+    svgEl.append(s('path', { class: 'line glow', d: curve }));
+    svgEl.append(s('path', { class: 'line', d: curve }));
     const last = pts[n - 1];
     svgEl.append(s('circle', { class: 'dot', cx: last[0], cy: last[1], r: 4 }));
     svgEl.append(s('text', { class: 'end-label', x: last[0], y: last[1] - 10, 'text-anchor': 'end' }, compact(rows[n - 1][o.key])));
@@ -631,6 +733,28 @@ function lineChart(host, rows, o) {
   });
 }
 
+// Đường cong monotone (Fritsch–Carlson): không vọt quá dữ liệu như Catmull-Rom
+function monotonePath(pts) {
+  const n = pts.length;
+  if (n < 3) return 'M' + pts.map((p) => p.join(',')).join(' L');
+  const dx = [], sl = [];
+  for (let i = 0; i < n - 1; i++) { dx.push(pts[i + 1][0] - pts[i][0] || 1e-6); sl.push((pts[i + 1][1] - pts[i][1]) / dx[i]); }
+  const tg = [sl[0]];
+  for (let i = 1; i < n - 1; i++) tg.push(sl[i - 1] * sl[i] <= 0 ? 0 : (sl[i - 1] + sl[i]) / 2);
+  tg.push(sl[n - 2]);
+  for (let i = 0; i < n - 1; i++) {
+    if (sl[i] === 0) { tg[i] = 0; tg[i + 1] = 0; continue; }
+    const a = tg[i] / sl[i], b = tg[i + 1] / sl[i], r = a * a + b * b;
+    if (r > 9) { const k = 3 / Math.sqrt(r); tg[i] = k * a * sl[i]; tg[i + 1] = k * b * sl[i]; }
+  }
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const w = dx[i] / 3;
+    d += ` C${pts[i][0] + w},${pts[i][1] + tg[i] * w} ${pts[i + 1][0] - w},${pts[i + 1][1] - tg[i + 1] * w} ${pts[i + 1][0]},${pts[i + 1][1]}`;
+  }
+  return d;
+}
+
 function barChart(host, rows, o) {
   if (!rows.length) host.dataset.empty = '1';
   registerChart(host, () => {
@@ -640,6 +764,7 @@ function barChart(host, rows, o) {
     const pw = W - m.l - m.r, ph = H - m.t - m.b;
     const n = rows.length;
     const vals = rows.map((r) => r[o.key]);
+    const peak = Math.max(...vals);
     const sc = niceScale(Math.min(0, ...vals), Math.max(0, ...vals));
     const slot = pw / n;
     const bw = Math.max(2, Math.min(24, slot - 2)); // khe 2px giữa các cột
@@ -659,7 +784,7 @@ function barChart(host, rows, o) {
       const d = v > 0
         ? `M${x},${top + hh} V${top + rad} Q${x},${top} ${x + rad},${top} H${x + bw - rad} Q${x + bw},${top} ${x + bw},${top + rad} V${top + hh} Z`
         : `M${x},${top} V${top + hh - rad} Q${x},${top + hh} ${x + rad},${top + hh} H${x + bw - rad} Q${x + bw},${top + hh} ${x + bw},${top + hh - rad} V${top} Z`;
-      const p = s('path', { class: 'bar', d });
+      const p = s('path', { class: 'bar' + (v === peak ? ' peak' : ''), d });
       svgEl.append(p);
       return p;
     });

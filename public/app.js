@@ -180,8 +180,10 @@ function lineChart(host, rows, o) {
     yAxis(svgEl, sc, m, W, yOf);
     xLabels(svgEl, rows, xAt, H - 6, m, W);
     const pts = rows.map((r, i) => [xAt(i), yOf(r[o.key])]);
-    svgEl.append(s('path', { class: 'area', d: `M${pts[0][0]},${yOf(0)} ` + pts.map((p) => `L${p[0]},${p[1]}`).join(' ') + ` L${pts[n - 1][0]},${yOf(0)} Z` }));
-    svgEl.append(s('path', { class: 'line', d: 'M' + pts.map((p) => p.join(',')).join(' L') }));
+    const curve = monotonePath(pts);
+    svgEl.append(s('path', { class: 'area', d: curve + ` L${pts[n - 1][0]},${yOf(0)} L${pts[0][0]},${yOf(0)} Z` }));
+    svgEl.append(s('path', { class: 'line glow', d: curve }));
+    svgEl.append(s('path', { class: 'line', d: curve }));
     const last = pts[n - 1];
     svgEl.append(s('circle', { class: 'dot', cx: last[0], cy: last[1], r: 4 }));
     svgEl.append(s('text', { class: 'end-label', x: last[0], y: last[1] - 10, 'text-anchor': 'end' }, compact(rows[n - 1][o.key])));
@@ -201,6 +203,28 @@ function lineChart(host, rows, o) {
   });
 }
 
+// Đường cong monotone (Fritsch–Carlson): không vọt quá dữ liệu như Catmull-Rom
+function monotonePath(pts) {
+  const n = pts.length;
+  if (n < 3) return 'M' + pts.map((p) => p.join(',')).join(' L');
+  const dx = [], sl = [];
+  for (let i = 0; i < n - 1; i++) { dx.push(pts[i + 1][0] - pts[i][0] || 1e-6); sl.push((pts[i + 1][1] - pts[i][1]) / dx[i]); }
+  const tg = [sl[0]];
+  for (let i = 1; i < n - 1; i++) tg.push(sl[i - 1] * sl[i] <= 0 ? 0 : (sl[i - 1] + sl[i]) / 2);
+  tg.push(sl[n - 2]);
+  for (let i = 0; i < n - 1; i++) {
+    if (sl[i] === 0) { tg[i] = 0; tg[i + 1] = 0; continue; }
+    const a = tg[i] / sl[i], b = tg[i + 1] / sl[i], r = a * a + b * b;
+    if (r > 9) { const k = 3 / Math.sqrt(r); tg[i] = k * a * sl[i]; tg[i + 1] = k * b * sl[i]; }
+  }
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const w = dx[i] / 3;
+    d += ` C${pts[i][0] + w},${pts[i][1] + tg[i] * w} ${pts[i + 1][0] - w},${pts[i + 1][1] - tg[i + 1] * w} ${pts[i + 1][0]},${pts[i + 1][1]}`;
+  }
+  return d;
+}
+
 function barChart(host, rows, o) {
   if (!rows.length) host.dataset.empty = '1';
   registerChart(host, () => {
@@ -210,6 +234,7 @@ function barChart(host, rows, o) {
     const pw = W - m.l - m.r, ph = H - m.t - m.b;
     const n = rows.length;
     const vals = rows.map((r) => r[o.key]);
+    const peak = Math.max(...vals);
     const sc = niceScale(Math.min(0, ...vals), Math.max(0, ...vals));
     const slot = pw / n;
     const bw = Math.max(2, Math.min(24, slot - 2)); // khe 2px giữa các cột
@@ -229,7 +254,7 @@ function barChart(host, rows, o) {
       const d = v > 0
         ? `M${x},${top + hh} V${top + rad} Q${x},${top} ${x + rad},${top} H${x + bw - rad} Q${x + bw},${top} ${x + bw},${top + rad} V${top + hh} Z`
         : `M${x},${top} V${top + hh - rad} Q${x},${top + hh} ${x + rad},${top + hh} H${x + bw - rad} Q${x + bw},${top + hh} ${x + bw},${top + hh - rad} V${top} Z`;
-      const p = s('path', { class: 'bar', d });
+      const p = s('path', { class: 'bar' + (v === peak ? ' peak' : ''), d });
       svgEl.append(p);
       return p;
     });
